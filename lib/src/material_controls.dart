@@ -169,7 +169,7 @@ class _MaterialControlsState extends State<MaterialControls> {
                   ),
                   child: Padding(
                     padding: EdgeInsets.all(12.0),
-                    child: Icon(Icons.play_arrow, size: 32.0),
+                    child: Icon(Icons.play_arrow, size: 32.0, color: Theme.of(context).accentIconTheme.color),
                   ),
                 ),
               ),
@@ -236,12 +236,16 @@ class _MaterialControlsState extends State<MaterialControls> {
   }
 
   Widget _buildPosition(Color iconColor) {
-    final position = _latestValue != null && _latestValue.position != null
+    var position = _latestValue != null && _latestValue.position != null
         ? _latestValue.position
         : Duration.zero;
     final duration = _latestValue != null && _latestValue.duration != null
         ? _latestValue.duration
         : Duration.zero;
+
+    if (position.inMilliseconds > duration.inMilliseconds) {
+      position = duration;
+    }
 
     return Padding(
       padding: EdgeInsets.only(right: 24.0),
@@ -307,7 +311,15 @@ class _MaterialControlsState extends State<MaterialControls> {
             controller.play();
           });
         } else {
-          controller.play();
+          final position = _latestValue?.position ?? Duration.zero;
+          final duration = _latestValue?.duration ?? Duration.zero;
+          if (position.inMilliseconds >= duration.inMilliseconds) {
+            controller.seekTo(Duration.zero).then((_) {
+              controller.play();
+            });
+          } else {
+            controller.play();
+          }
         }
       }
     });
