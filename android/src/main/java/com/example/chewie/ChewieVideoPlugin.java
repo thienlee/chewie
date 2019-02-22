@@ -10,7 +10,6 @@ import io.flutter.plugin.common.PluginRegistry.Registrar;
 public class ChewieVideoPlugin implements MethodCallHandler {
   /** Plugin registration. */
   public static void registerWith(Registrar registrar) {
-
   }
 
   @Override
