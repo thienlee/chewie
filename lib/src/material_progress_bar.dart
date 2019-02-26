@@ -141,16 +141,19 @@ class _ProgressBarPainter extends CustomPainter {
       ),
       colors.backgroundPaint,
     );
-    if (!value.initialized) {
+    if (!value.initialized || value.position == null || value.duration == null || value.duration.inMilliseconds == 0) {
       return;
     }
+
     final double playedPartPercent = value.position.inMilliseconds /
         value.duration.inMilliseconds;
     final double playedPart = playedPartPercent > 1? size.width
         : playedPartPercent * size.width;
+
     for (DurationRange range in value.buffered) {
       final double start = range.startFraction(value.duration) * size.width;
       final double end = range.endFraction(value.duration) * size.width;
+
       canvas.drawRRect(
         RRect.fromRectAndRadius(
           Rect.fromPoints(

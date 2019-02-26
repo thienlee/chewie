@@ -21,7 +21,6 @@ class _MaterialControlsState extends State<MaterialControls> {
   double _latestVolume;
   bool _hideStuff = true;
   Timer _hideTimer;
-  Timer _showTimer;
   Timer _showAfterExpandCollapseTimer;
   bool _dragging = false;
 
@@ -31,6 +30,11 @@ class _MaterialControlsState extends State<MaterialControls> {
   VideoPlayerController controller;
   ChewieController chewieController;
 
+  bool get _videoLoading => _latestValue != null &&
+      !_latestValue.isPlaying &&
+      _latestValue.duration == null ||
+      _latestValue.isBuffering;
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -39,21 +43,19 @@ class _MaterialControlsState extends State<MaterialControls> {
       },
       child: AbsorbPointer(
         absorbing: _hideStuff,
-        child: Column(
+        child:Column(
           children: <Widget>[
-            _latestValue != null &&
-                        !_latestValue.isPlaying &&
-                        _latestValue.duration == null ||
-                    _latestValue.isBuffering
+            Container(height: barHeight),
+            _videoLoading
                 ? Expanded(
-                    child: Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  )
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            )
                 : _buildHitArea(),
             _buildBottomBar(context),
           ],
-        ),
+        )
       ),
     );
   }
@@ -67,7 +69,6 @@ class _MaterialControlsState extends State<MaterialControls> {
   void _dispose() {
     controller.removeListener(_updateState);
     _hideTimer?.cancel();
-    _showTimer?.cancel();
     _showAfterExpandCollapseTimer?.cancel();
   }
 
@@ -91,7 +92,7 @@ class _MaterialControlsState extends State<MaterialControls> {
     final iconColor = Theme.of(context).textTheme.button.color;
 
     return AnimatedOpacity(
-      opacity: _hideStuff ? 0.0 : 1.0,
+      opacity: _hideStuff || _videoLoading ? 0.0 : 1.0,
       duration: Duration(milliseconds: 300),
       child: Container(
         height: barHeight,
@@ -165,11 +166,11 @@ class _MaterialControlsState extends State<MaterialControls> {
                 child: Container(
                   decoration: BoxDecoration(
                     color: Theme.of(context).dialogBackgroundColor,
-                    borderRadius: BorderRadius.circular(48.0),
+                    borderRadius: BorderRadius.circular(56.0),
                   ),
                   child: Padding(
-                    padding: EdgeInsets.all(12.0),
-                    child: Icon(Icons.play_arrow, size: 32.0, color: Theme.of(context).accentIconTheme.color),
+                    padding: EdgeInsets.all(8.0),
+                    child: Icon(Icons.play_arrow, size: 48.0, color: Theme.of(context).accentIconTheme.color),
                   ),
                 ),
               ),
@@ -277,11 +278,6 @@ class _MaterialControlsState extends State<MaterialControls> {
       _startHideTimer();
     }
 
-    _showTimer = Timer(Duration(milliseconds: 200), () {
-      setState(() {
-        _hideStuff = false;
-      });
-    });
   }
 
   void _onExpandCollapse() {

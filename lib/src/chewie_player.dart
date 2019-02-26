@@ -72,21 +72,30 @@ class ChewieState extends State<Chewie> {
     );
   }
 
-  Widget _buildFullScreenVideo(
-      BuildContext context, Animation<double> animation) {
-    final width = MediaQuery.of(context).size.height;
-    final height = MediaQuery.of(context).size.width;
+  Widget _buildFullScreenVideo(BuildContext context, Animation<double> animation) {
 
     return Theme(
       data: Theme.of(this.context),
       child: Scaffold(
-        resizeToAvoidBottomPadding: false,
-        body: Container(
-          alignment: Alignment.center,
-          color: Colors.black,
-          child: _ChewieControllerProvider(
-            controller: widget.controller,
-            child: PlayerWithControls(),
+        backgroundColor: Colors.black,
+        body: SafeArea(
+          child: Stack(
+            children: [
+              Container(
+                alignment: Alignment.center,
+                child: _ChewieControllerProvider(
+                  controller: widget.controller,
+                  child: PlayerWithControls(),
+                ),
+              ),
+              Positioned(
+                top: 0, left: 0,
+                child: IconButton(
+                  icon: Icon(Icons.close),
+                  onPressed: () => _closeFullscreen(),
+                )
+              )
+            ],
           ),
         ),
       ),
@@ -144,6 +153,20 @@ class ChewieState extends State<Chewie> {
       DeviceChannel.forcePortrait();
     }
   }
+
+  Future _closeFullscreen() async {
+    Navigator.of(context).pop();
+    final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
+    await SystemChrome.setEnabledSystemUIOverlays(widget.controller.systemOverlaysAfterFullScreen);
+    await SystemChrome.setPreferredOrientations(widget.controller.deviceOrientationsAfterFullScreen);
+    if (isIOS) {
+      DeviceChannel.forcePortrait();
+    }
+
+    if (widget.controller.onExitFullscreen != null) {
+      widget.controller.onExitFullscreen();
+    }
+  }
 }
 
 /// The ChewieController is used to configure and drive the Chewie Player
@@ -182,6 +205,7 @@ class ChewieController extends ChangeNotifier {
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ],
+    this.onExitFullscreen = null
   }) : assert(videoPlayerController != null,
             'You must provide a controller to play a video') {
     _initialize();
@@ -251,6 +275,8 @@ class ChewieController extends ChangeNotifier {
 
   /// Defines the set of allowed device orientations after exiting fullscreen
   final List<DeviceOrientation> deviceOrientationsAfterFullScreen;
+
+  final VoidCallback onExitFullscreen;
 
   static ChewieController of(BuildContext context) {
     final _ChewieControllerProvider chewieControllerProvider =
