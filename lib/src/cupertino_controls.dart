@@ -12,7 +12,7 @@ import 'package:open_iconic_flutter/open_iconic_flutter.dart';
 import 'package:video_player/video_player.dart';
 
 class CupertinoControls extends StatefulWidget {
-  CupertinoControls({
+  const CupertinoControls({
     @required this.backgroundColor,
     @required this.iconColor,
   });
@@ -40,6 +40,23 @@ class _CupertinoControlsState extends State<CupertinoControls> {
 
   @override
   Widget build(BuildContext context) {
+    chewieController = ChewieController.of(context);
+
+    if (_latestValue.hasError) {
+      return chewieController.errorBuilder != null
+          ? chewieController.errorBuilder(
+              context,
+              chewieController.videoPlayerController.value.errorDescription,
+            )
+          : Center(
+              child: Icon(
+                OpenIconicIcons.ban,
+                color: Colors.white,
+                size: 42,
+              ),
+            );
+    }
+
     final backgroundColor = widget.backgroundColor;
     final iconColor = widget.iconColor;
     chewieController = ChewieController.of(context);
@@ -48,18 +65,24 @@ class _CupertinoControlsState extends State<CupertinoControls> {
     final barHeight = orientation == Orientation.portrait ? 30.0 : 47.0;
     final buttonPadding = orientation == Orientation.portrait ? 16.0 : 24.0;
 
-    return GestureDetector(
-      onTap: () {
+    return MouseRegion(
+      onHover: (_) {
         _cancelAndRestartTimer();
       },
-      child: AbsorbPointer(
-        absorbing: _hideStuff,
-        child: Column(
-          children: <Widget>[
-            _buildTopBar(backgroundColor, iconColor, barHeight, buttonPadding),
-            _buildHitArea(),
-            _buildBottomBar(backgroundColor, iconColor, barHeight),
-          ],
+      child: GestureDetector(
+        onTap: () {
+          _cancelAndRestartTimer();
+        },
+        child: AbsorbPointer(
+          absorbing: _hideStuff,
+          child: Column(
+            children: <Widget>[
+              _buildTopBar(
+                  backgroundColor, iconColor, barHeight, buttonPadding),
+              _buildHitArea(),
+              _buildBottomBar(backgroundColor, iconColor, barHeight),
+            ],
+          ),
         ),
       ),
     );
@@ -104,7 +127,8 @@ class _CupertinoControlsState extends State<CupertinoControls> {
         color: Colors.transparent,
         alignment: Alignment.bottomCenter,
         margin: EdgeInsets.all(marginSize),
-        child: ClipRect(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(10.0),
           child: BackdropFilter(
             filter: ui.ImageFilter.blur(
               sigmaX: 10.0,
@@ -112,12 +136,7 @@ class _CupertinoControlsState extends State<CupertinoControls> {
             ),
             child: Container(
               height: barHeight,
-              decoration: BoxDecoration(
-                color: backgroundColor,
-                borderRadius: BorderRadius.all(
-                  Radius.circular(10.0),
-                ),
-              ),
+              color: backgroundColor,
               child: chewieController.isLive
                   ? Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -164,7 +183,8 @@ class _CupertinoControlsState extends State<CupertinoControls> {
       child: AnimatedOpacity(
         opacity: _hideStuff ? 0.0 : 1.0,
         duration: Duration(milliseconds: 300),
-        child: ClipRect(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(10.0),
           child: BackdropFilter(
             filter: ui.ImageFilter.blur(sigmaX: 10.0),
             child: Container(
@@ -173,12 +193,7 @@ class _CupertinoControlsState extends State<CupertinoControls> {
                 left: buttonPadding,
                 right: buttonPadding,
               ),
-              decoration: BoxDecoration(
-                color: backgroundColor,
-                borderRadius: BorderRadius.all(
-                  Radius.circular(10.0),
-                ),
-              ),
+              color: backgroundColor,
               child: Center(
                 child: Icon(
                   chewieController.isFullScreen
@@ -235,16 +250,12 @@ class _CupertinoControlsState extends State<CupertinoControls> {
       child: AnimatedOpacity(
         opacity: _hideStuff ? 0.0 : 1.0,
         duration: Duration(milliseconds: 300),
-        child: ClipRect(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(10.0),
           child: BackdropFilter(
             filter: ui.ImageFilter.blur(sigmaX: 10.0),
             child: Container(
-              decoration: BoxDecoration(
-                color: backgroundColor,
-                borderRadius: BorderRadius.all(
-                  Radius.circular(10.0),
-                ),
-              ),
+              color: backgroundColor,
               child: Container(
                 height: barHeight,
                 padding: EdgeInsets.only(
@@ -418,11 +429,13 @@ class _CupertinoControlsState extends State<CupertinoControls> {
       _startHideTimer();
     }
 
-    _initTimer = Timer(Duration(milliseconds: 200), () {
-      setState(() {
-        _hideStuff = false;
+    if (chewieController.showControlsOnInitialize) {
+      _initTimer = Timer(Duration(milliseconds: 200), () {
+        setState(() {
+          _hideStuff = false;
+        });
       });
-    });
+    }
   }
 
   void _onExpandCollapse() {
@@ -483,6 +496,16 @@ class _CupertinoControlsState extends State<CupertinoControls> {
   }
 
   void _playPause() {
+      bool isFinished;
+      if( _latestValue.duration != null)
+      {
+        isFinished = _latestValue.position >= _latestValue.duration;
+      }
+      else
+      {
+        isFinished = false;
+      }
+
     setState(() {
       if (controller.value.isPlaying) {
         _hideStuff = false;
@@ -496,6 +519,9 @@ class _CupertinoControlsState extends State<CupertinoControls> {
             controller.play();
           });
         } else {
+          if (isFinished) {
+            controller.seekTo(Duration(seconds: 0));
+          }
           controller.play();
         }
       }

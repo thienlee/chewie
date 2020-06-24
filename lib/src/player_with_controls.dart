@@ -10,7 +10,6 @@ import 'package:video_player/video_player.dart';
 class PlayerWithControls extends StatelessWidget {
   PlayerWithControls({Key key}) : super(key: key);
 
-
   @override
   Widget build(BuildContext context) {
     final ChewieController chewieController = ChewieController.of(context);
@@ -20,7 +19,7 @@ class PlayerWithControls extends StatelessWidget {
         width: MediaQuery.of(context).size.width,
         child: AspectRatio(
           aspectRatio:
-              chewieController.aspectRatio ?? _calculateAspectRatio(context, chewieController),
+              chewieController.aspectRatio ?? _calculateAspectRatio(context),
           child: _buildPlayerWithControls(chewieController, context),
         ),
       ),
@@ -34,13 +33,10 @@ class PlayerWithControls extends StatelessWidget {
         children: <Widget>[
           chewieController.placeholder ?? Container(),
           Center(
-            child: Hero(
-              tag: chewieController.videoPlayerController,
-              child: AspectRatio(
-                aspectRatio: chewieController.aspectRatio ??
-                    _calculateAspectRatio(context, chewieController),
-                child: VideoPlayer(chewieController.videoPlayerController),
-              ),
+            child: AspectRatio(
+              aspectRatio: chewieController.aspectRatio ??
+                  _calculateAspectRatio(context),
+              child: VideoPlayer(chewieController.videoPlayerController),
             ),
           ),
           chewieController.overlay ?? Container(),
@@ -57,18 +53,20 @@ class PlayerWithControls extends StatelessWidget {
     return chewieController.showControls
         ? chewieController.customControls != null
             ? chewieController.customControls
-              : MaterialControls()
+            : Theme.of(context).platform == TargetPlatform.android
+                ? MaterialControls()
+                : CupertinoControls(
+                    backgroundColor: Color.fromRGBO(41, 41, 41, 0.7),
+                    iconColor: Color.fromARGB(255, 200, 200, 200),
+                  )
         : Container();
   }
 
-  double _calculateAspectRatio(BuildContext context, ChewieController chewieController) {
+  double _calculateAspectRatio(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final width = size.width;
     final height = size.height;
-    final _controller = chewieController.videoPlayerController;
 
-    return (_controller.value?.initialized??false)
-        ? _controller.value.aspectRatio
-        : width > height ? width / height : height / width;
+    return width > height ? width / height : height / width;
   }
 }

@@ -15,6 +15,7 @@ In your `pubspec.yaml` file within your Flutter Project:
 ```yaml
 dependencies:
   chewie: <latest_version>
+  video_player: <latest_version>
 ```
 
 ## Use it
@@ -22,7 +23,7 @@ dependencies:
 ```dart
 import 'package:chewie/chewie.dart';
 final videoPlayerController = VideoPlayerController.network(
-    'https://flutter.github.io/assets-for-api-docs/videos/butterfly.mp4');
+    'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4');
 
 final chewieController = ChewieController(
   videoPlayerController: videoPlayerController,

@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 class MaterialControls extends StatefulWidget {
-  MaterialControls({Key key}) : super(key: key);
+  const MaterialControls({Key key}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -21,8 +21,10 @@ class _MaterialControlsState extends State<MaterialControls> {
   double _latestVolume;
   bool _hideStuff = true;
   Timer _hideTimer;
+  Timer _initTimer;
   Timer _showAfterExpandCollapseTimer;
   bool _dragging = false;
+  bool _displayTapped = false;
 
   final barHeight = 48.0;
   final marginSize = 5.0;
@@ -30,32 +32,47 @@ class _MaterialControlsState extends State<MaterialControls> {
   VideoPlayerController controller;
   ChewieController chewieController;
 
-  bool get _videoLoading => _latestValue != null &&
-      !_latestValue.isPlaying &&
-      _latestValue.duration == null ||
-      _latestValue.isBuffering;
-
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
+    if (_latestValue.hasError) {
+      return chewieController.errorBuilder != null
+          ? chewieController.errorBuilder(
+              context,
+              chewieController.videoPlayerController.value.errorDescription,
+            )
+          : Center(
+              child: Icon(
+                Icons.error,
+                color: Colors.white,
+                size: 42,
+              ),
+            );
+    }
+
+    return MouseRegion(
+      onHover: (_) {
         _cancelAndRestartTimer();
       },
-      child: AbsorbPointer(
-        absorbing: _hideStuff,
-        child:Column(
-          children: <Widget>[
-            Container(height: barHeight),
-            _videoLoading
-                ? Expanded(
-              child: Center(
-                child: CircularProgressIndicator(),
-              ),
-            )
-                : _buildHitArea(),
-            _buildBottomBar(context),
-          ],
-        )
+      child: GestureDetector(
+        onTap: () => _cancelAndRestartTimer(),
+        child: AbsorbPointer(
+          absorbing: _hideStuff,
+          child: Column(
+            children: <Widget>[
+              _latestValue != null &&
+                          !_latestValue.isPlaying &&
+                          _latestValue.duration == null ||
+                      _latestValue.isBuffering
+                  ? const Expanded(
+                      child: const Center(
+                        child: const CircularProgressIndicator(),
+                      ),
+                    )
+                  : _buildHitArea(),
+              _buildBottomBar(context),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -69,6 +86,7 @@ class _MaterialControlsState extends State<MaterialControls> {
   void _dispose() {
     controller.removeListener(_updateState);
     _hideTimer?.cancel();
+    _initTimer?.cancel();
     _showAfterExpandCollapseTimer?.cancel();
   }
 
@@ -92,7 +110,7 @@ class _MaterialControlsState extends State<MaterialControls> {
     final iconColor = Theme.of(context).textTheme.button.color;
 
     return AnimatedOpacity(
-      opacity: _hideStuff || _videoLoading ? 0.0 : 1.0,
+      opacity: _hideStuff ? 0.0 : 1.0,
       duration: Duration(milliseconds: 300),
       child: Container(
         height: barHeight,
@@ -144,15 +162,22 @@ class _MaterialControlsState extends State<MaterialControls> {
   Expanded _buildHitArea() {
     return Expanded(
       child: GestureDetector(
-        onTap: _latestValue != null && _latestValue.isPlaying
-            ? _cancelAndRestartTimer
-            : () {
-                _playPause();
+        onTap: () {
+          if (_latestValue != null && _latestValue.isPlaying) {
+            if (_displayTapped) {
+              setState(() {
+                _hideStuff = true;
+              });
+            } else
+              _cancelAndRestartTimer();
+          } else {
+            _playPause();
 
-                setState(() {
-                  _hideStuff = true;
-                });
-              },
+            setState(() {
+              _hideStuff = true;
+            });
+          }
+        },
         child: Container(
           color: Colors.transparent,
           child: Center(
@@ -166,11 +191,11 @@ class _MaterialControlsState extends State<MaterialControls> {
                 child: Container(
                   decoration: BoxDecoration(
                     color: Theme.of(context).dialogBackgroundColor,
-                    borderRadius: BorderRadius.circular(56.0),
+                    borderRadius: BorderRadius.circular(48.0),
                   ),
                   child: Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Icon(Icons.play_arrow, size: 48.0, color: Theme.of(context).accentIconTheme.color),
+                    padding: EdgeInsets.all(12.0),
+                    child: Icon(Icons.play_arrow, size: 32.0),
                   ),
                 ),
               ),
@@ -237,16 +262,12 @@ class _MaterialControlsState extends State<MaterialControls> {
   }
 
   Widget _buildPosition(Color iconColor) {
-    var position = _latestValue != null && _latestValue.position != null
+    final position = _latestValue != null && _latestValue.position != null
         ? _latestValue.position
         : Duration.zero;
     final duration = _latestValue != null && _latestValue.duration != null
         ? _latestValue.duration
         : Duration.zero;
-
-    if (position.inMilliseconds > duration.inMilliseconds) {
-      position = duration;
-    }
 
     return Padding(
       padding: EdgeInsets.only(right: 24.0),
@@ -265,6 +286,7 @@ class _MaterialControlsState extends State<MaterialControls> {
 
     setState(() {
       _hideStuff = false;
+      _displayTapped = true;
     });
   }
 
@@ -278,6 +300,13 @@ class _MaterialControlsState extends State<MaterialControls> {
       _startHideTimer();
     }
 
+    if (chewieController.showControlsOnInitialize) {
+      _initTimer = Timer(Duration(milliseconds: 200), () {
+        setState(() {
+          _hideStuff = false;
+        });
+      });
+    }
   }
 
   void _onExpandCollapse() {
@@ -294,6 +323,16 @@ class _MaterialControlsState extends State<MaterialControls> {
   }
 
   void _playPause() {
+    bool isFinished;
+    if( _latestValue.duration != null)
+    {
+      isFinished = _latestValue.position >= _latestValue.duration;
+    }
+    else
+    {
+      isFinished = false;
+    }
+
     setState(() {
       if (controller.value.isPlaying) {
         _hideStuff = false;
@@ -307,15 +346,10 @@ class _MaterialControlsState extends State<MaterialControls> {
             controller.play();
           });
         } else {
-          final position = _latestValue?.position ?? Duration.zero;
-          final duration = _latestValue?.duration ?? Duration.zero;
-          if (position.inMilliseconds >= duration.inMilliseconds) {
-            controller.seekTo(Duration.zero).then((_) {
-              controller.play();
-            });
-          } else {
-            controller.play();
+          if (isFinished) {
+            controller.seekTo(Duration(seconds: 0));
           }
+          controller.play();
         }
       }
     });
