@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:chewie/src/channel.dart';
 import 'package:chewie/src/chewie_progress_colors.dart';
 import 'package:chewie/src/player_with_controls.dart';
 import 'package:flutter/material.dart';
@@ -60,9 +61,8 @@ class ChewieState extends State<Chewie> {
     } else if (_isFullScreen) {
       Navigator.of(context, rootNavigator: true).pop();
       _isFullScreen = false;
-      if (widget.controller.onExitFullscreen != null) {
-        widget.controller.onExitFullscreen();
-      }
+    } else if (widget.controller.videoPlayerController.value != null && widget.controller.videoPlayerController.value.initialized) {
+      setState(() {});
     }
   }
 
@@ -75,25 +75,29 @@ class ChewieState extends State<Chewie> {
   }
 
   Widget _buildFullScreenVideo(BuildContext context, Animation<double> animation, _ChewieControllerProvider controllerProvider) {
-    return Scaffold(
-      resizeToAvoidBottomPadding: false,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Container(
-              alignment: Alignment.center,
-              color: Colors.black,
-              child: controllerProvider,
-            ),
-            Positioned(
-              top: 0,
-              left: 0,
-              child: IconButton(
-                icon: Icon(Icons.close),
-                onPressed: () => widget.controller.exitFullScreen(),
+    return Theme(
+      data: Theme.of(this.context),
+      child: Scaffold(
+//        resizeToAvoidBottomPadding: false,
+        backgroundColor: Colors.black,
+        body: SafeArea(
+          child: Stack(
+            children: [
+              Container(
+                alignment: Alignment.center,
+                color: Colors.black,
+                child: controllerProvider,
               ),
-            ),
-          ],
+              Positioned(
+                top: 0,
+                left: 0,
+                child: IconButton(
+                  icon: Icon(Icons.close),
+                  onPressed: () => _closeFullscreen(),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -125,16 +129,22 @@ class ChewieState extends State<Chewie> {
   }
 
   Future<dynamic> _pushFullScreenWidget(BuildContext context) async {
-    final isAndroid = Theme.of(context).platform == TargetPlatform.android;
+    final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
     final TransitionRoute<Null> route = PageRouteBuilder<Null>(
       pageBuilder: _fullScreenRoutePageBuilder,
+      transitionDuration: const Duration(milliseconds: 10),
+      fullscreenDialog: true,
     );
 
     SystemChrome.setEnabledSystemUIOverlays([]);
-    if (isAndroid) {
+    if (isIOS) {
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.landscapeRight,
+      ]);
+      await DeviceChannel.forceLandscape();
+    } else {
       SystemChrome.setPreferredOrientations([
         DeviceOrientation.landscapeLeft,
-        DeviceOrientation.landscapeRight,
       ]);
     }
 
@@ -152,6 +162,24 @@ class ChewieState extends State<Chewie> {
 
     SystemChrome.setEnabledSystemUIOverlays(widget.controller.systemOverlaysAfterFullScreen);
     SystemChrome.setPreferredOrientations(widget.controller.deviceOrientationsAfterFullScreen);
+    if (isIOS) {
+      DeviceChannel.forcePortrait();
+    }
+  }
+
+  Future _closeFullscreen() async {
+    Wakelock.disable();
+    Navigator.of(context, rootNavigator: true).pop();
+    final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
+    await SystemChrome.setEnabledSystemUIOverlays(widget.controller.systemOverlaysAfterFullScreen);
+    await SystemChrome.setPreferredOrientations(widget.controller.deviceOrientationsAfterFullScreen);
+    if (isIOS) {
+      DeviceChannel.forcePortrait();
+    }
+
+    if (widget.controller.onExitFullscreen != null) {
+      widget.controller.onExitFullscreen();
+    }
   }
 }
 
@@ -276,8 +304,7 @@ class ChewieController extends ChangeNotifier {
   final VoidCallback onExitFullscreen;
 
   static ChewieController of(BuildContext context) {
-    final chewieControllerProvider = context.inheritFromWidgetOfExactType(_ChewieControllerProvider) as _ChewieControllerProvider;
-
+    final chewieControllerProvider = context.dependOnInheritedWidgetOfExactType<_ChewieControllerProvider>();
     return chewieControllerProvider.controller;
   }
 
