@@ -11,6 +11,8 @@ dependencies:
   open_iconic_flutter: ">=0.3.0 <0.4.0"
   video_player: '>=0.10.11+2 <2.0.0'
   wakelock: ">=0.1.2 <0.2.0"
+  auto_orientation: 1.0.6
+  native_device_orientation: 0.4.3
 
   flutter:
     sdk: flutter

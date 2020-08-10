@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
+import 'package:native_device_orientation/native_device_orientation.dart';
 
 void main() {
   runApp(
@@ -28,6 +29,7 @@ class _ChewieDemoState extends State<ChewieDemo> {
   VideoPlayerController _videoPlayerController1;
   VideoPlayerController _videoPlayerController2;
   ChewieController _chewieController;
+  NativeDeviceOrientation _lastOrientation;
 
   @override
   void initState() {
@@ -58,6 +60,15 @@ class _ChewieDemoState extends State<ChewieDemo> {
               );
             },
           );
+        },
+        /*deviceOrientationsAfterFullScreen: [
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ],*/
+        onExitFullscreen: () {
+          AutoOrientation.fullAutoMode();
         }
         // Try playing around with some of these other options:
 
@@ -103,7 +114,29 @@ class _ChewieDemoState extends State<ChewieDemo> {
                 ),
               ),
             ),
-            FlatButton(
+            NativeDeviceOrientationReader(builder: (context) {
+              final orientation =
+                  NativeDeviceOrientationReader.orientation(context);
+              if (_lastOrientation != orientation) {
+                _lastOrientation = orientation;
+                WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                  switch (_lastOrientation) {
+                    case NativeDeviceOrientation.portraitUp:
+                    case NativeDeviceOrientation.portraitDown:
+                      _chewieController?.exitFullScreen();
+                      break;
+                    case NativeDeviceOrientation.landscapeLeft:
+                    case NativeDeviceOrientation.landscapeRight:
+                      _chewieController?.enterFullScreen();
+                      break;
+                    case NativeDeviceOrientation.unknown:
+                      break;
+                  }
+                });
+              }
+              return Container();
+            }),
+            /* FlatButton(
               onPressed: () {
                 _chewieController.enterFullScreen();
               },
@@ -184,7 +217,7 @@ class _ChewieDemoState extends State<ChewieDemo> {
                   ),
                 )
               ],
-            )
+            )*/
           ],
         ),
       ),
@@ -204,21 +237,13 @@ class VideoScaffold extends StatefulWidget {
 class _VideoScaffoldState extends State<VideoScaffold> {
   @override
   void initState() {
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeRight,
-      DeviceOrientation.landscapeLeft,
-    ]);
-    AutoOrientation.landscapeMode();
+    AutoOrientation.landscapeAutoMode();
     super.initState();
   }
 
   @override
   dispose() {
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
-    AutoOrientation.portraitMode();
+    AutoOrientation.portraitAutoMode();
     super.dispose();
   }
 

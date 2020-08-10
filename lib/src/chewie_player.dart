@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:chewie/src/channel.dart';
+import 'package:auto_orientation/auto_orientation.dart';
 import 'package:chewie/src/chewie_progress_colors.dart';
 import 'package:chewie/src/player_with_controls.dart';
 import 'package:flutter/material.dart';
@@ -30,9 +30,7 @@ class Chewie extends StatefulWidget {
   final ChewieController controller;
 
   @override
-  ChewieState createState() {
-    return ChewieState();
-  }
+  ChewieState createState() => ChewieState();
 }
 
 class ChewieState extends State<Chewie> {
@@ -47,6 +45,8 @@ class ChewieState extends State<Chewie> {
   @override
   void dispose() {
     widget.controller.removeListener(listener);
+    SystemChrome.setPreferredOrientations(
+        widget.controller.deviceOrientationsAfterFullScreen);
     super.dispose();
   }
 
@@ -64,19 +64,14 @@ class ChewieState extends State<Chewie> {
       await _pushFullScreenWidget(context);
     } else if (_isFullScreen) {
       _isFullScreen = false;
-      if (Theme.of(context).platform == TargetPlatform.iOS) {
-        SystemChrome.setPreferredOrientations([
-          DeviceOrientation.portraitUp,
-        ]);
-        try {
-          await DeviceChannel.forcePortrait();
-        } catch (ex) {}
-      }
+      SystemChrome.setPreferredOrientations(
+          widget.controller.deviceOrientationsAfterFullScreen);
       Navigator.of(context, rootNavigator: true).pop();
-    } else if (widget.controller.videoPlayerController.value != null &&
+    }
+    /* else if (widget.controller.videoPlayerController.value != null &&
         widget.controller.videoPlayerController.value.initialized) {
       setState(() {});
-    }
+    }*/
   }
 
   @override
@@ -160,18 +155,10 @@ class ChewieState extends State<Chewie> {
     SystemChrome.setEnabledSystemUIOverlays([]);
     final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
     if (isIOS) {
-      SystemChrome.setPreferredOrientations([
-        DeviceOrientation.landscapeRight,
-      ]);
-      try {
-        await DeviceChannel.forceLandscape();
-      } catch (ex) {}
+      AutoOrientation.landscapeRightMode();
     } else {
-      SystemChrome.setPreferredOrientations([
-        DeviceOrientation.landscapeLeft,
-      ]);
+      AutoOrientation.landscapeLeftMode();
     }
-
     if (!widget.controller.allowedScreenSleep) {
       Wakelock.enable();
     }
@@ -189,12 +176,7 @@ class ChewieState extends State<Chewie> {
     SystemChrome.setPreferredOrientations(
         widget.controller.deviceOrientationsAfterFullScreen);
     if (isIOS) {
-      SystemChrome.setPreferredOrientations([
-        DeviceOrientation.portraitUp,
-      ]);
-      try {
-        await DeviceChannel.forcePortrait();
-      } catch (ex) {}
+      AutoOrientation.portraitUpMode();
     }
   }
 
@@ -205,12 +187,10 @@ class ChewieState extends State<Chewie> {
         widget.controller.systemOverlaysAfterFullScreen);
     await SystemChrome.setPreferredOrientations(
         widget.controller.deviceOrientationsAfterFullScreen);
-    final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
-    if (isIOS) {
-      try {
-        await DeviceChannel.forcePortrait();
-      } catch (ex) {}
+    if (Theme.of(context).platform == TargetPlatform.iOS) {
+      AutoOrientation.portraitUpMode();
     }
+
     if (widget.controller.onExitFullscreen != null) {
       widget.controller.onExitFullscreen();
     }
@@ -358,11 +338,11 @@ class ChewieController extends ChangeNotifier {
       await videoPlayerController.initialize();
     }
 
-    if (autoPlay) {
-      if (fullScreenByDefault) {
-        enterFullScreen();
-      }
+    if (fullScreenByDefault) {
+      enterFullScreen();
+    }
 
+    if (autoPlay) {
       await videoPlayerController.play();
     }
 
@@ -370,9 +350,9 @@ class ChewieController extends ChangeNotifier {
       await videoPlayerController.seekTo(startAt);
     }
 
-    if (fullScreenByDefault) {
-      videoPlayerController.addListener(_fullScreenListener);
-    }
+//    if (fullScreenByDefault) {
+//      videoPlayerController.addListener(_fullScreenListener);
+//    }
   }
 
   void _fullScreenListener() async {
