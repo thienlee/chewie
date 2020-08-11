@@ -45,8 +45,6 @@ class ChewieState extends State<Chewie> {
   @override
   void dispose() {
     widget.controller.removeListener(listener);
-    SystemChrome.setPreferredOrientations(
-        widget.controller.deviceOrientationsAfterFullScreen);
     super.dispose();
   }
 
@@ -63,15 +61,11 @@ class ChewieState extends State<Chewie> {
       _isFullScreen = true;
       await _pushFullScreenWidget(context);
     } else if (_isFullScreen) {
-      _isFullScreen = false;
       SystemChrome.setPreferredOrientations(
           widget.controller.deviceOrientationsAfterFullScreen);
       Navigator.of(context, rootNavigator: true).pop();
+      _isFullScreen = false;
     }
-    /* else if (widget.controller.videoPlayerController.value != null &&
-        widget.controller.videoPlayerController.value.initialized) {
-      setState(() {});
-    }*/
   }
 
   @override
@@ -89,7 +83,7 @@ class ChewieState extends State<Chewie> {
     return Theme(
       data: Theme.of(this.context),
       child: Scaffold(
-//        resizeToAvoidBottomPadding: false,
+        resizeToAvoidBottomInset: false,
         backgroundColor: Colors.black,
         body: SafeArea(
           child: Stack(
@@ -103,7 +97,7 @@ class ChewieState extends State<Chewie> {
                 top: 0,
                 left: 0,
                 child: IconButton(
-                  icon: Icon(Icons.close),
+                  icon: Icon(Icons.close, color: Colors.white),
                   onPressed: () => _closeFullscreen(),
                 ),
               ),
@@ -146,6 +140,7 @@ class ChewieState extends State<Chewie> {
   }
 
   Future<dynamic> _pushFullScreenWidget(BuildContext context) async {
+    final isAndroid = Theme.of(context).platform == TargetPlatform.android;
     final TransitionRoute<Null> route = PageRouteBuilder<Null>(
       pageBuilder: _fullScreenRoutePageBuilder,
       transitionDuration: const Duration(milliseconds: 10),
@@ -153,12 +148,10 @@ class ChewieState extends State<Chewie> {
     );
 
     SystemChrome.setEnabledSystemUIOverlays([]);
-    final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
-    if (isIOS) {
-      AutoOrientation.landscapeRightMode();
-    } else {
-      AutoOrientation.landscapeLeftMode();
+    if (isAndroid) {
+      AutoOrientation.landscapeAutoMode();
     }
+
     if (!widget.controller.allowedScreenSleep) {
       Wakelock.enable();
     }
@@ -175,9 +168,6 @@ class ChewieState extends State<Chewie> {
         widget.controller.systemOverlaysAfterFullScreen);
     SystemChrome.setPreferredOrientations(
         widget.controller.deviceOrientationsAfterFullScreen);
-    if (isIOS) {
-      AutoOrientation.portraitUpMode();
-    }
   }
 
   Future _closeFullscreen() async {
@@ -338,11 +328,11 @@ class ChewieController extends ChangeNotifier {
       await videoPlayerController.initialize();
     }
 
-    if (fullScreenByDefault) {
-      enterFullScreen();
-    }
-
     if (autoPlay) {
+      if (fullScreenByDefault) {
+        enterFullScreen();
+      }
+
       await videoPlayerController.play();
     }
 
@@ -350,9 +340,9 @@ class ChewieController extends ChangeNotifier {
       await videoPlayerController.seekTo(startAt);
     }
 
-//    if (fullScreenByDefault) {
-//      videoPlayerController.addListener(_fullScreenListener);
-//    }
+    if (fullScreenByDefault) {
+      videoPlayerController.addListener(_fullScreenListener);
+    }
   }
 
   void _fullScreenListener() async {

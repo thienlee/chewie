@@ -68,7 +68,8 @@ class _ChewieDemoState extends State<ChewieDemo> {
     return MaterialApp(
       title: widget.title,
       theme: ThemeData.light().copyWith(
-        platform: _platform ?? Theme.of(context).platform,
+//        platform: _platform ?? Theme.of(context).platform,
+        platform: TargetPlatform.iOS,
       ),
       home: Scaffold(
         appBar: AppBar(
