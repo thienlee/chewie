@@ -140,7 +140,7 @@ class ChewieState extends State<Chewie> {
   }
 
   Future<dynamic> _pushFullScreenWidget(BuildContext context) async {
-    final isAndroid = Theme.of(context).platform == TargetPlatform.android;
+//    final isAndroid = Theme.of(context).platform == TargetPlatform.android;
     final TransitionRoute<Null> route = PageRouteBuilder<Null>(
       pageBuilder: _fullScreenRoutePageBuilder,
       transitionDuration: const Duration(milliseconds: 10),
@@ -148,9 +148,9 @@ class ChewieState extends State<Chewie> {
     );
 
     SystemChrome.setEnabledSystemUIOverlays([]);
-    if (isAndroid) {
+    /*if (isAndroid) {
       AutoOrientation.landscapeAutoMode();
-    }
+    }*/
 
     if (!widget.controller.allowedScreenSleep) {
       Wakelock.enable();

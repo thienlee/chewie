@@ -3,6 +3,7 @@ import 'package:chewie/chewie.dart';
 import 'package:chewie/src/chewie_player.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:native_device_orientation/native_device_orientation.dart';
 import 'package:video_player/video_player.dart';
 
 void main() {
@@ -30,6 +31,7 @@ class _ChewieDemoState extends State<ChewieDemo> {
 
   @override
   void initState() {
+    AutoOrientation.portraitUpMode();
     super.initState();
     _videoPlayerController1 = VideoPlayerController.network(
         'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4');
@@ -40,6 +42,7 @@ class _ChewieDemoState extends State<ChewieDemo> {
         aspectRatio: 3 / 2,
         autoPlay: true,
         looping: true,
+        fullScreenByDefault: true,
         routePageBuilder: (BuildContext context, Animation<double> animation,
             Animation<double> secondAnimation, provider) {
           return AnimatedBuilder(
@@ -87,12 +90,10 @@ class _ChewieDemoState extends State<ChewieDemo> {
     return MaterialApp(
       title: widget.title,
       theme: ThemeData.light().copyWith(
-        platform: _platform ?? Theme.of(context).platform,
+//        platform: _platform ?? Theme.of(context).platform,
+        platform: TargetPlatform.iOS,
       ),
       home: Scaffold(
-        appBar: AppBar(
-          title: Text(widget.title),
-        ),
         body: Column(
           children: <Widget>[
             Expanded(
@@ -199,9 +200,10 @@ class VideoScaffold extends StatefulWidget {
 }
 
 class _VideoScaffoldState extends State<VideoScaffold> {
+  NativeDeviceOrientation _lastOrientation;
+
   @override
   void initState() {
-    AutoOrientation.landscapeAutoMode();
     super.initState();
   }
 
@@ -213,6 +215,43 @@ class _VideoScaffoldState extends State<VideoScaffold> {
 
   @override
   Widget build(BuildContext context) {
-    return widget.child;
+    /*return OrientationBuilder(
+      builder: (context, orientation) {
+        if (_lastOrientation != orientation) {
+          _lastOrientation = orientation;
+          switch (_lastOrientation) {
+            case Orientation.portrait:
+              AutoOrientation.portraitAutoMode();
+              break;
+            case Orientation.landscape:
+              AutoOrientation.landscapeAutoMode();
+              break;
+          }
+        }
+        return widget.child;
+      },
+    );*/
+    return NativeDeviceOrientationReader(
+      builder: (context) {
+        final _orientation = NativeDeviceOrientationReader.orientation(context);
+        if (_lastOrientation != _orientation) {
+          _lastOrientation = _orientation;
+          switch (_orientation) {
+            case NativeDeviceOrientation.portraitUp:
+            case NativeDeviceOrientation.portraitDown:
+              AutoOrientation.portraitAutoMode();
+              break;
+            case NativeDeviceOrientation.landscapeLeft:
+            case NativeDeviceOrientation.landscapeRight:
+              AutoOrientation.landscapeAutoMode();
+              break;
+            case NativeDeviceOrientation.unknown:
+              break;
+          }
+        }
+        return widget.child;
+      },
+      useSensor: true,
+    );
   }
 }
