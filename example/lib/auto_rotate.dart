@@ -51,10 +51,22 @@ class _ChewieDemoState extends State<ChewieDemo> {
               return VideoScaffold(
                 child: Scaffold(
                   resizeToAvoidBottomPadding: false,
-                  body: Container(
-                    alignment: Alignment.center,
-                    color: Colors.black,
-                    child: provider,
+                  body: Stack(
+                    children: [
+                      Container(
+                        alignment: Alignment.center,
+                        color: Colors.black,
+                        child: provider,
+                      ),
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        child: IconButton(
+                          icon: Icon(Icons.close, color: Colors.white),
+                          onPressed: () {},
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               );
