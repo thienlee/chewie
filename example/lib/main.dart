@@ -36,7 +36,7 @@ class _ChewieDemoState extends State<ChewieDemo> {
         'https://www.sample-videos.com/video123/mp4/480/asdasdas.mp4');
     _chewieController = ChewieController(
       videoPlayerController: _videoPlayerController1,
-      aspectRatio: 3 / 2,
+//      aspectRatio: 3 / 2,
       autoPlay: true,
       looping: true,
       // Try playing around with some of these other options:
