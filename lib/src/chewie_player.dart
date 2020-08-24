@@ -227,6 +227,7 @@ class ChewieController extends ChangeNotifier {
     ],
     this.routePageBuilder = null,
     this.onExitFullscreen,
+    this.onToggleFullScreen,
   }) : assert(videoPlayerController != null,
             'You must provide a controller to play a video') {
     _initialize();
@@ -308,6 +309,8 @@ class ChewieController extends ChangeNotifier {
 
   final VoidCallback onExitFullscreen;
 
+  final ValueChanged<bool> onToggleFullScreen;
+
   static ChewieController of(BuildContext context) {
     final chewieControllerProvider =
         context.dependOnInheritedWidgetOfExactType<_ChewieControllerProvider>();
@@ -364,6 +367,9 @@ class ChewieController extends ChangeNotifier {
 
   void toggleFullScreen() {
     _isFullScreen = !_isFullScreen;
+    if (onToggleFullScreen != null) {
+      onToggleFullScreen(_isFullScreen);
+    }
     notifyListeners();
   }
 
