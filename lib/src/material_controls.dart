@@ -59,7 +59,10 @@ class _MaterialControlsState extends State<MaterialControls> {
           absorbing: _hideStuff,
           child: Column(
             children: <Widget>[
-              _latestValue != null && !_latestValue.isPlaying && _latestValue.duration == null || _latestValue.isBuffering
+              _latestValue != null &&
+                          !_latestValue.isPlaying &&
+                          _latestValue.duration == null ||
+                      _latestValue.isBuffering
                   ? const Expanded(
                       child: const Center(
                         child: const CircularProgressIndicator(),
@@ -108,17 +111,23 @@ class _MaterialControlsState extends State<MaterialControls> {
 
     return AnimatedOpacity(
       opacity: _hideStuff ? 0.0 : 1.0,
-      duration: Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 300),
       child: Container(
         height: barHeight,
         color: Theme.of(context).dialogBackgroundColor,
         child: Row(
           children: <Widget>[
             _buildPlayPause(controller),
-            chewieController.isLive ? Expanded(child: const Text('LIVE')) : _buildPosition(iconColor),
+            chewieController.isLive
+                ? Expanded(child: const Text('LIVE'))
+                : _buildPosition(iconColor),
             chewieController.isLive ? const SizedBox() : _buildProgressBar(),
-            chewieController.allowMuting ? _buildMuteButton(controller) : Container(),
-            chewieController.allowFullScreen ? _buildExpandButton() : Container(),
+            chewieController.allowMuting
+                ? _buildMuteButton(controller)
+                : Container(),
+            chewieController.allowFullScreen
+                ? _buildExpandButton()
+                : Container(),
           ],
         ),
       ),
@@ -140,7 +149,9 @@ class _MaterialControlsState extends State<MaterialControls> {
           ),
           child: Center(
             child: Icon(
-              chewieController.isFullScreen ? Icons.fullscreen_exit : Icons.fullscreen,
+              chewieController.isFullScreen
+                  ? Icons.fullscreen_exit
+                  : Icons.fullscreen,
             ),
           ),
         ),
@@ -171,7 +182,10 @@ class _MaterialControlsState extends State<MaterialControls> {
           color: Colors.transparent,
           child: Center(
             child: AnimatedOpacity(
-              opacity: _latestValue != null && !_latestValue.isPlaying && !_dragging ? 1.0 : 0.0,
+              opacity:
+                  _latestValue != null && !_latestValue.isPlaying && !_dragging
+                      ? 1.0
+                      : 0.0,
               duration: Duration(milliseconds: 300),
               child: GestureDetector(
                 child: Container(
@@ -218,7 +232,9 @@ class _MaterialControlsState extends State<MaterialControls> {
                 right: 8.0,
               ),
               child: Icon(
-                (_latestValue != null && _latestValue.volume > 0) ? Icons.volume_up : Icons.volume_off,
+                (_latestValue != null && _latestValue.volume > 0)
+                    ? Icons.volume_up
+                    : Icons.volume_off,
               ),
             ),
           ),
@@ -246,8 +262,12 @@ class _MaterialControlsState extends State<MaterialControls> {
   }
 
   Widget _buildPosition(Color iconColor) {
-    final position = _latestValue != null && _latestValue.position != null ? _latestValue.position : Duration.zero;
-    final duration = _latestValue != null && _latestValue.duration != null ? _latestValue.duration : Duration.zero;
+    final position = _latestValue != null && _latestValue.position != null
+        ? _latestValue.position
+        : Duration.zero;
+    final duration = _latestValue != null && _latestValue.duration != null
+        ? _latestValue.duration
+        : Duration.zero;
 
     return Padding(
       padding: EdgeInsets.only(right: 24.0),
@@ -275,7 +295,8 @@ class _MaterialControlsState extends State<MaterialControls> {
 
     _updateState();
 
-    if ((controller.value != null && controller.value.isPlaying) || chewieController.autoPlay) {
+    if ((controller.value != null && controller.value.isPlaying) ||
+        chewieController.autoPlay) {
       _startHideTimer();
     }
 

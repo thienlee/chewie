@@ -37,7 +37,7 @@ class _ChewieDemoState extends State<ChewieDemo> {
         'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4');
     _videoPlayerController2 = VideoPlayerController.network(
         'https://www.sample-videos.com/video123/mp4/480/big_buck_bunny_480p_20mb.mp4');
-    _videoPlayerController1.initialize().then((value) => setState(() {}));
+//    _videoPlayerController1.initialize().then((value) => setState(() {}));
     _chewieController = ChewieController(
         videoPlayerController: _videoPlayerController1,
 //        aspectRatio: 3 / 2,
@@ -228,22 +228,6 @@ class _VideoScaffoldState extends State<VideoScaffold> {
 
   @override
   Widget build(BuildContext context) {
-    /*return OrientationBuilder(
-      builder: (context, orientation) {
-        if (_lastOrientation != orientation) {
-          _lastOrientation = orientation;
-          switch (_lastOrientation) {
-            case Orientation.portrait:
-              AutoOrientation.portraitAutoMode();
-              break;
-            case Orientation.landscape:
-              AutoOrientation.landscapeAutoMode();
-              break;
-          }
-        }
-        return widget.child;
-      },
-    );*/
     return NativeDeviceOrientationReader(
       builder: (context) {
         final _orientation = NativeDeviceOrientationReader.orientation(context);

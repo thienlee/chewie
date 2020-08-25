@@ -57,14 +57,14 @@ class ChewieState extends State<Chewie> {
   }
 
   void listener() async {
-    if (widget.controller.isFullScreen && !_isFullScreen) {
-      _isFullScreen = true;
-      await _pushFullScreenWidget(context);
-    } else if (_isFullScreen) {
-      SystemChrome.setPreferredOrientations(
-          widget.controller.deviceOrientationsAfterFullScreen);
-      Navigator.of(context, rootNavigator: true).pop();
-      _isFullScreen = false;
+    if(!widget.controller.fullScreenHandled) {
+      if (widget.controller.isFullScreen && !_isFullScreen) {
+        _isFullScreen = true;
+        await _pushFullScreenWidget(context);
+      } else if (_isFullScreen) {
+        Navigator.of(context, rootNavigator: true).pop();
+        _isFullScreen = false;
+      }
     }
   }
 
@@ -72,7 +72,10 @@ class ChewieState extends State<Chewie> {
   Widget build(BuildContext context) {
     return _ChewieControllerProvider(
       controller: widget.controller,
-      child: PlayerWithControls(),
+      child: Theme(
+        data: widget.controller?.theme ?? Theme.of(context),
+        child: PlayerWithControls(),
+      ),
     );
   }
 
@@ -98,7 +101,7 @@ class ChewieState extends State<Chewie> {
                 left: 0,
                 child: IconButton(
                   icon: Icon(Icons.close, color: Colors.white),
-                  onPressed: () => _closeFullscreen(),
+                  onPressed: () => closeVideo(),
                 ),
               ),
             ],
@@ -133,17 +136,25 @@ class ChewieState extends State<Chewie> {
 
     if (widget.controller.routePageBuilder == null) {
       return _defaultRoutePageBuilder(
-          context, animation, secondaryAnimation, controllerProvider);
+        context,
+        animation,
+        secondaryAnimation,
+        controllerProvider,
+      );
     }
     return widget.controller.routePageBuilder(
-        context, animation, secondaryAnimation, controllerProvider);
+      context,
+      animation,
+      secondaryAnimation,
+      controllerProvider,
+    );
   }
 
   Future<dynamic> _pushFullScreenWidget(BuildContext context) async {
 //    final isAndroid = Theme.of(context).platform == TargetPlatform.android;
     final TransitionRoute<Null> route = PageRouteBuilder<Null>(
       pageBuilder: _fullScreenRoutePageBuilder,
-      transitionDuration: const Duration(milliseconds: 10),
+      transitionDuration: const Duration(milliseconds: 300),
       fullscreenDialog: true,
     );
 
@@ -170,7 +181,7 @@ class ChewieState extends State<Chewie> {
         widget.controller.deviceOrientationsAfterFullScreen);
   }
 
-  Future _closeFullscreen() async {
+  Future closeVideo() async {
     Wakelock.disable();
     Navigator.of(context, rootNavigator: true).pop();
     await SystemChrome.setEnabledSystemUIOverlays(
@@ -228,6 +239,8 @@ class ChewieController extends ChangeNotifier {
     this.routePageBuilder = null,
     this.onExitFullscreen,
     this.onToggleFullScreen,
+    this.theme,
+    this.fullScreenHandled = false,
   }) : assert(videoPlayerController != null,
             'You must provide a controller to play a video') {
     _initialize();
@@ -311,6 +324,10 @@ class ChewieController extends ChangeNotifier {
 
   final ValueChanged<bool> onToggleFullScreen;
 
+  final ThemeData theme;
+
+  final bool fullScreenHandled;
+
   static ChewieController of(BuildContext context) {
     final chewieControllerProvider =
         context.dependOnInheritedWidgetOfExactType<_ChewieControllerProvider>();
@@ -320,6 +337,8 @@ class ChewieController extends ChangeNotifier {
   bool _isFullScreen = false;
 
   bool get isFullScreen => _isFullScreen;
+
+  set setIsFullScreen(bool isFullScreen) => _isFullScreen = isFullScreen;
 
   bool get isPlaying => videoPlayerController.value.isPlaying;
 
@@ -357,12 +376,16 @@ class ChewieController extends ChangeNotifier {
 
   void enterFullScreen() {
     _isFullScreen = true;
-    notifyListeners();
+    if(!fullScreenHandled) {
+      notifyListeners();
+    }
   }
 
   void exitFullScreen() {
     _isFullScreen = false;
-    notifyListeners();
+    if(!fullScreenHandled) {
+      notifyListeners();
+    }
   }
 
   void toggleFullScreen() {
@@ -370,7 +393,9 @@ class ChewieController extends ChangeNotifier {
     if (onToggleFullScreen != null) {
       onToggleFullScreen(_isFullScreen);
     }
-    notifyListeners();
+    if(!fullScreenHandled) {
+      notifyListeners();
+    }
   }
 
   void togglePause() {
