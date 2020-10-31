@@ -41,8 +41,8 @@ class _ChewieDemoState extends State<ChewieDemo> {
     _chewieController = ChewieController(
         videoPlayerController: _videoPlayerController1,
 //        aspectRatio: 3 / 2,
-        autoPlay: true,
-        looping: true,
+        autoPlay: false,
+        looping: false,
         fullScreenByDefault: true,
         routePageBuilder: (BuildContext context, Animation<double> animation,
             Animation<double> secondAnimation, provider) {
@@ -103,8 +103,8 @@ class _ChewieDemoState extends State<ChewieDemo> {
     return MaterialApp(
       title: widget.title,
       theme: ThemeData.light().copyWith(
-//        platform: _platform ?? Theme.of(context).platform,
-        platform: TargetPlatform.iOS,
+        platform: _platform ?? Theme.of(context).platform,
+//        platform: TargetPlatform.android,
       ),
       home: Scaffold(
         body: Column(
